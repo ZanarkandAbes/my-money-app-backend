@@ -7,11 +7,15 @@ const bodyParser = require('body-parser')
 
 const billingCycles = require('./routes')
 const app = express()
+const allowCors = require('./cors')
+const queryParser = require('express-query-int')
 
 // Body Parser:
 
-app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use(allowCors)
+app.use(queryParser())
 
 app.use('/billingCycles', billingCycles)
 

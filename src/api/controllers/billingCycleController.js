@@ -4,6 +4,8 @@
 
 const BillingCycle = require('../models/billingCycle')
 
+const NotFoundError = require('../common/errors/NotFound')
+
 exports.create = function (req, res, next) {
 
   let billingCycle = new BillingCycle({
@@ -33,16 +35,28 @@ exports.create = function (req, res, next) {
 
 exports.getById = function (req, res, next) {
   BillingCycle.findById(req.params.id, function (err, billingCycle) {
-    if (err) res.status(500).json({ errors: [error] })
+    if (err) res.status(500).json({ errors: [err] })
+    if (!billingCycle) {
+      const error = new NotFoundError()
+      error.httpStatusCode = 404
+      res.status(error.httpStatusCode).json(`Ciclo de pagamento não encontrado, erro: ${error.httpStatusCode}`)
+      return next(error)
+    }
+
     res.send(billingCycle)
   })
 }
 
 exports.getAll = function (req, res, next) {
-  BillingCycle.find(function (err, billingCycles) {
+
+  console.log(req.query)
+
+  // o 1º parâmetro do find é o filtro que se deseja fazer a partir do req.query.(nome do filtro passado)
+
+  BillingCycle.find({ name: req.query.name }, function (err, billingCycles) {
     if (err) res.status(500).json({ errors: [error] })
     res.send(billingCycles)
-  })
+  }).limit(req.query.limit).skip(req.query.skip)
 }
 
 exports.update = function (req, res, next) {
@@ -88,6 +102,9 @@ exports.summary = function (req, res, next) {
       debt: 1
     }
   }, (err, result) => {
-    if (err) res.status(500).json({ errors: [error] })
+    if (err) {
+      res.status(500).json({ errors: [error] })
+    }
+    res.json(result[0] || { credit: 0, debt: 0 })
   })
 }
